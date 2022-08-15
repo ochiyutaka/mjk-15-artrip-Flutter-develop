@@ -1,0 +1,351 @@
+<!doctype html><html><head><meta charset="UTF-8"/><title>Maplat</title><meta content="yes" name="apple-mobile-web-app-capable"/><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"/><link rel="icon" type="image/png" href="parts/favicon.png"/><link href="https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.1/mapbox-gl.css" rel="stylesheet"/><style>.mainview {
+        position: absolute;
+        top: 0%;
+        bottom: 0%;
+        left: 0%;
+        right: 0%;
+      }
+      .button {
+        position: absolute;
+        top: 95%;
+        bottom: 0%;
+        left: 5%;
+        right: 5%;
+      }
+      .map {
+          top: 0%;
+          bottom: 0%;
+          left: 0%;
+          right: 0%;
+          position: absolute;
+      }
+
+    </style><link href="./assets/maplat_core.css" rel="stylesheet">
+ </head>
+    <body>
+        <div class="mainview">
+          <div id="map_div"></div>
+        </div>
+        <div class="button"></div>
+        <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v1.6.1/mapbox-gl.js"></script>
+        <script src="./assets/maplat_core.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.0.0-rc.5/dist/html2canvas.min.js"></script>
+    </body>
+    
+    <script type="text/javascript">
+        var option = {
+            mapboxgl: mapboxgl,
+            mapboxToken: 'YOUR-ACCESS-TOKEN'
+        };
+        var hashes = window.location.href
+                    .slice(window.location.href.indexOf("?") + 1)
+                    .split("&");
+        for (var i = 0; i < hashes.length; i++) {
+            hash = hashes[i].split("=");
+            option[hash[0]] =
+            hash[1] == "true" ? true : hash[1] == "false" ? false : hash[1];
+        }
+
+    // new MaplatApp(option).waitReady.then(function (app) {
+    var appContext;
+    var opend = false;
+    var makerId = "";
+    var nLat = 0.0;
+    var nLon = 0.0;
+    var nDirection = 0.0;
+    
+    Maplat.createObject(option).then(function (app) {
+    　console.log(`####Maplat createObject`);
+      appContext = app;
+      
+      app.addEventListener("sourceLoaded", function (evt) {
+        console.log(`####Message sourceLoaded`)
+        
+      });
+      
+      // 初期表示は90度回転
+      const viewpoint = {
+          rotation: -90.0
+      }
+      
+      /*window.setTimeout(function(){
+          appContext.setViewpoint(viewpoint);
+      }, 1);*/
+      
+      // ベースMAPはOSM
+      /*window.setTimeout(function(){
+          console.log(`####osm chagne`);
+          appContext.changeMap("osm");
+      }, 5);*/
+      
+      // レイヤー初期登録
+      appContext.addPoiLayer("stamp");
+      appContext.addPoiLayer("view");
+      appContext.addPoiLayer("tonnel");
+      appContext.addPoiLayer("landmark");
+      appContext.addPoiLayer("postcard");
+      appContext.addPoiLayer("other");
+
+      // Mapクリックイベント登録
+      app.addEventListener("clickMap", function (evt) {
+        console.log(`####Message clickMap ${JSON.stringify(evt.detail)}`);
+        app.unselectMarker();
+        opend = false
+        makerId = ""
+        
+        let data = JSON.stringify({["opened"]:"false"})
+        webkit.messageHandlers.spotview.postMessage(data);
+        
+      });
+
+
+      // 地図表示領域外イベント登録
+      app.addEventListener("outOfMap", function (evt) {
+        console.log(`####Message outOfMap`);
+      });
+      
+      // マーカークリック時イベント登録
+      app.addEventListener("clickMarker", function (evt) {
+         console.log(`####Message clickMap ${JSON.stringify(evt.detail)}`);
+         console.log(evt.target);
+         app.selectMarker(evt.detail.namespaceID);
+         if(opend == true && markerId == evt.detail.namespaceID){
+            let data = JSON.stringify({
+                ["id"]:evt.detail.id,
+                ["name_jp"]:evt.detail.name.ja,
+                ["name_eng"]:evt.detail.name.en,
+                ["address"]:evt.detail.address,
+                ["start"]:String(evt.detail.start),
+                ["desc"]:evt.detail.desc,
+                ["image"]:evt.detail.image
+            });
+            //webkit.messageHandlers.showInfoDetail.postMessage(data);
+         }else{
+             
+            console.log("spot open");
+            console.log(evt.detail.layer)
+            opend = true;
+            markerId = evt.detail.namespaceID;
+            
+            let data2 = JSON.stringify({
+                ["opened"]: "true",
+                ["id"]:evt.detail.id,
+                ["name_jp"]:evt.detail.name.ja,
+                ["name_eng"]:evt.detail.name.en,
+                ["address"]:evt.detail.address,
+                ["start"]:String(evt.detail.start),
+                ["desc"]:evt.detail.desc,
+                ["image"]:evt.detail.image,
+                ["layer"]:evt.detail.layer
+            });
+            // SpotViewを表示
+            webkit.messageHandlers.spotview.postMessage(data2);
+         }
+      });
+    });
+      // マーカー登録
+      function addMarker(data, layer){
+          console.log(`#### Add Marker ${data}`);
+          const obj = JSON.parse(data);
+          var nameObj = obj["name"]
+          appContext.addMarker({
+              id:obj["id"],
+              name:{
+                  ja: nameObj["ja"],
+                  en: nameObj["en"]
+              },
+              address: obj["address"],
+              lat: parseFloat(obj["lat"]),
+              lng: parseFloat(obj["lng"]),
+              start: parseInt(obj["desc"]),
+              desc: obj["desc"],
+              image: obj["image"],
+              icon: obj["icon"],
+              selected_icon: obj["selected_icon"],
+              layer: obj["layer"]
+          },
+          obj["layer"]
+        );
+      }
+        
+      // マーカー更新(現時点ではバグで動かない)
+      function updateMarker(id,data){
+          console.log(`#### Update Marker ${data}`);
+          // すでに登録されたマーカーの情報を更新
+          appContext.updateMarker(id,data, false);
+      }
+    
+      // マーカー削除(個別)
+      function removeMarker(id){
+          console.log(`#### Remove Marker ${id}`);
+          // すでに登録されたマーカーの情報を更新
+          appContext.removeMarker(id);
+      }
+    
+      function setPoiLayer(){
+          appContext.showPoiLayer("main2");
+      }
+      
+      // レイヤー表示切替
+      function changePoiLayer(layer){
+          
+          console.log(`#### Show Layer ${layer}`);
+          
+          // all hide
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("main");
+          }, 1);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("stamp");
+          }, 2);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("landmark");
+          }, 3);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("tonnel");
+          }, 4);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("other");
+          }, 5);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("view");
+          }, 6);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("postcard");
+          }, 7);
+          
+          // select one show
+          window.setTimeout(function(){
+              appContext.showPoiLayer(layer);
+          }, 10);
+
+      }
+      
+      // 全てのレイヤー表示
+      function showAllPoiLayer(){
+          // All Show Layer
+          window.setTimeout(function(){
+              appContext.showPoiLayer("stamp");
+          }, 1);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("landmark");
+          }, 2);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("tonnel");
+          }, 3);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("other");
+          }, 4);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("main");
+          }, 5);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("view");
+          }, 6);
+          window.setTimeout(function(){
+              appContext.showPoiLayer("postcard");
+          }, 7);
+      }
+
+      // 全てのレイヤー非表示
+      function hideAllPoiLayer(){
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("stamp");
+          }, 1);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("landmark");
+          }, 2);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("tonnel");
+          }, 3);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("other");
+          }, 4);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("main");
+          }, 5);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("view");
+          }, 6);
+          window.setTimeout(function(){
+              appContext.hidePoiLayer("postcard");
+          }, 7);
+      }
+
+      // 古地図透過度設定
+      function setTransparency(value){
+        appContext.setTransparency(value);
+      }
+
+      // 地図回転(90度)
+      function setDirection(){
+        var vpoint = {
+            rotation : -90.0  //方向
+        }
+        appContext.setViewpoint(vpoint);
+      }
+
+      // 古地図切替
+      function changesMap(mapId){
+       console.log(`####change Map`);
+       appContext.changeMap(mapId);
+      }
+
+      // GPSマーカー表示
+      function setGPSMaker(lat,lon,accrancy){
+       console.log("GPSMaker")
+       var lnglatArray = []
+       lnglatArray.push(parseFloat(lon))
+       lnglatArray.push(parseFloat(lat))
+       //lnglatArray.push(139.76702109266324)
+       //lnglatArray.push(35.68410527594036)
+       nLat = parseFloat(lat)
+       nLon = parseFloat(lon)
+       var maker = {
+            lnglat : lnglatArray,
+            acc : 1.0
+        }
+       appContext.setGPSMarker(maker);
+      }
+    
+      // 古地図表示のリセット
+      function hideMap(){
+            //ベースMAPの表示で上のMAPが消える
+            appContext.changeMap("osm");
+            
+            //その際に地図透過度を０にリセット
+            window.setTimeout(function(){
+                appContext.setTransparency(100);
+            }, 1);
+      }
+        
+      // GPS現在値をMAPセンターにセット
+      function setNowViewPosition(){
+        console.log(`####setNowViewPosition`);
+        // GPS値が取得されている時のみ
+        if(nLat > 0.0 && nLon > 0.0){
+            appContext.setViewpoint({
+                latitude: nLat,
+                longitude: nLon,
+                direction: 180-parseFloat(nDirection)
+              });
+        }
+      }
+        
+      // GPS現在値をMAPセンターにセット
+      function setNowDirection(direction){
+        console.log(`####setNowDirection`);
+            
+        nDirection = direction;
+        // GPS値が取得されている時のみ
+        if(nLat > 0.0 && nLon > 0.0){
+            appContext.setViewpoint({
+                latitude: nLat,
+                longitude: nLon,
+                direction: 180-parseFloat(nDirection)
+            });
+        }
+      }
+
+    </script>
+</script></html>

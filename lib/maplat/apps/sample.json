@@ -1,0 +1,84 @@
+{
+    "app_name" : {
+        "ja" : "盛岡市古地図アプリ",
+        "en" : "Historical Map Application of Morioka"
+    },
+    "lang" : "ja",
+    "fake_gps" : false,
+    "fake_center" : {
+        "ja" : "盛岡市",
+        "en" : "Morioka"
+    },
+    "fake_radius" : 10,
+    "home_position" : [139.767024, 35.681824],
+    "default_zoom" : 17,
+    "zoom_restriction" : false,
+    "min_zoom" : 5,
+    "max_zoom" : 21,
+    "start_from" : "osm",
+    "sources" : [
+        {
+            "label" : "丸の内",
+            "map_id" : "TEST001",
+            "setting_file" : "maps/TEST001.json",
+            "url" : "tiles/TEST001/{z}/{x}/{y}.jpg",
+            "thumbnail" : "tmbs/TEST001.jpg"
+        },
+        {
+            "label" : "北海道",
+            "map_id" : "hokkaido001",
+            "setting_file" : "maps/hokkaido001.json",
+            "url" : "tiles/hokkaido001/{z}/{x}/{y}.jpg",
+            "thumbnail" : "tmbs/hokkaido001.jpg"
+        },
+        {
+            "label" : "札幌本府",
+            "map_id" : "sapporo002",
+            "setting_file" : "maps/sapporo002.json",
+            "url" : "tiles/sapporo002/{z}/{x}/{y}.png",
+            "thumbnail" : "tmbs/hokkaido001.jpg"
+        },
+        {
+            "label" : "狸小路１丁目",
+            "map_id" : "sapporo003",
+            "setting_file" : "maps/sapporo003.json",
+            "url" : "tiles/sapporo003/{z}/{x}/{y}.png",
+            "thumbnail" : "tmbs/hokkaido001.jpg"
+        },
+        {
+            "label" : "薄野遊郭",
+            "map_id" : "sapporo004",
+            "setting_file" : "maps/sapporo004.json",
+            "url" : "tiles/sapporo004/{z}/{x}/{y}.png",
+            "thumbnail" : "tmbs/hokkaido001.jpg"
+        },
+        {
+            "label" : "お声掛かりの柏",
+            "map_id" : "sapporo005",
+            "setting_file" : "maps/sapporo005.json",
+            "url" : "tiles/sapporo005/{z}/{x}/{y}.png",
+            "thumbnail" : "tmbs/hokkaido001.jpg"
+        },
+        {
+            "label" : "1644 (TMS)",
+            "map_id" : "morioka_ndl_affine"
+        },
+        {
+            "map_id"     : "morioka_ndl2",
+            "setting_file" : "maps/morioka_ndl.json",
+            "label" : "1644 (Maplat)",
+            "url" : "tiles/morioka_ndl/{z}/{x}/{y}.jpg",
+            "thumbnail" : "tmbs/morioka_ndl.jpg"
+        },
+        {
+            "map_id"     : "morioka"
+        },
+        "gsi",
+        "osm",
+        {
+            "map_id" : "mapbox",
+            "label" : "Mapbox"
+        }
+    ],
+    "pois" : "marunouchi_stamp.json"
+}
